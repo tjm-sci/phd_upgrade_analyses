@@ -1,9 +1,9 @@
-"...1","Count","Cells | Freq. of Parent","Cells | Count","Cells/Viable cells | Freq. of Parent","Cells/Viable cells | Count","Cells/Viable cells | Freq. of Grandparent"
-"D (fixed).fcs",63362,"49.7 %",31506,"59.0 %",18585,"29.3 %"
-"A (fixed).fcs",75379,"26.0 %",19611,"62.2 %",12204,"16.2 %"
-"B (fixed).fcs",155109,"46.7 %",72476,"63.2 %",45800,"29.5 %"
-"C (fixed).fcs",183982,"38.4 %",70576,"56.6 %",39975,"21.7 %"
-"E post debris (fixed).fcs",39822,"38.7 %",15419,"59.2 %",9129,"22.9 %"
-"F post debris (fixed).fcs",20250,"13.9 %",2813,"67.1 %",1888,"9.32 %"
-"G post debris (fixed).fcs",25931,"24.0 %",6212,"63.9 %",3969,"15.3 %"
-"H post debris (fixed).fcs",42178,"22.2 %",9371,"62.2 %",5831,"13.8 %"
+"...1","total_events","cells_pct_total","cells_count","cells_pct_viable_cells","cells_count_viable","cells_pct_viable_sample","est_total_viable_cells"
+"D (fixed).fcs",63362,49.7,31506,59,18585,29.3,185850
+"A (fixed).fcs",75379,26,19611,62.2,12204,16.2,122040
+"B (fixed).fcs",155109,46.7,72476,63.2,45800,29.5,458000
+"C (fixed).fcs",183982,38.4,70576,56.6,39975,21.7,399750
+"E post debris (fixed).fcs",39822,38.7,15419,59.2,9129,22.9,91290
+"F post debris (fixed).fcs",20250,13.9,2813,67.1,1888,9.32,18880
+"G post debris (fixed).fcs",25931,24,6212,63.9,3969,15.3,39690
+"H post debris (fixed).fcs",42178,22.2,9371,62.2,5831,13.8,58310

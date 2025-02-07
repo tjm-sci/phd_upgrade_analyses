@@ -1,17 +1,17 @@
-"sample","Count","Cells | Count","Cells | Freq. of Parent"
-"A1 pre-debris.fcs",496000,4872,"0.98 %"
-"A2 post-debris.fcs",360248,66072,"18.3 %"
-"B1 pre-debris.fcs",461000,3460,"0.75 %"
-"B2 post-debris.fcs",243507,38987,"16.0 %"
-"C1 pre-debris.fcs",477000,6098,"1.28 %"
-"C2 post-debris.fcs",248332,56839,"22.9 %"
-"D1 pre-debris.fcs",484000,3593,"0.74 %"
-"D2 post-debris.fcs",191191,32829,"17.2 %"
-"E1 pre-debris.fcs",331864,851,"0.26 %"
-"E2 post-debris.fcs",293941,74319,"25.3 %"
-"F1 pre-debris.fcs",372234,1714,"0.46 %"
-"F2 post-debris.fcs",727000,106307,"14.6 %"
-"G1 pre-debris.fcs",523000,4771,"0.91 %"
-"G2 post-debris.fcs",745000,92303,"12.4 %"
-"H1 pre-debris.fcs",285445,5323,"1.86 %"
-"H2 post-debris.fcs",846000,194199,"22.9 %"
+"sample","total_events","cells_count","cells_pct_total","est_cells_total","sample_group","sample_type","enrichment"
+"A1 pre-debris.fcs",496000,4872,0.98,535920,"A","pre-debris",NA
+"A2 post-debris.fcs",360248,66072,18.3,660720,"A","post-debris",18.6734693877551
+"B1 pre-debris.fcs",461000,3460,0.75,380600,"B","pre-debris",NA
+"B2 post-debris.fcs",243507,38987,16,389870,"B","post-debris",21.3333333333333
+"C1 pre-debris.fcs",477000,6098,1.28,670780,"C","pre-debris",NA
+"C2 post-debris.fcs",248332,56839,22.9,568390,"C","post-debris",17.890625
+"D1 pre-debris.fcs",484000,3593,0.74,395230,"D","pre-debris",NA
+"D2 post-debris.fcs",191191,32829,17.2,328290,"D","post-debris",23.2432432432432
+"E1 pre-debris.fcs",331864,851,0.26,93610,"E","pre-debris",NA
+"E2 post-debris.fcs",293941,74319,25.3,743190,"E","post-debris",97.3076923076923
+"F1 pre-debris.fcs",372234,1714,0.46,188540,"F","pre-debris",NA
+"F2 post-debris.fcs",727000,106307,14.6,1063070,"F","post-debris",31.7391304347826
+"G1 pre-debris.fcs",523000,4771,0.91,524810,"G","pre-debris",NA
+"G2 post-debris.fcs",745000,92303,12.4,923030,"G","post-debris",13.6263736263736
+"H1 pre-debris.fcs",285445,5323,1.86,585530,"H","pre-debris",NA
+"H2 post-debris.fcs",846000,194199,22.9,1941990,"H","post-debris",12.3118279569892
