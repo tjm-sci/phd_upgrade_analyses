@@ -25,17 +25,6 @@ excel_list <- lapply(sheet_names, function(sheet){
   read_excel(xlsxpath, sheet = sheet)
 })
 
-# give elements of the list the original spreadsheet names
-names(excel_list) <- sheet_names
-
-# save each as a csv file in the output folder (for other purposes)
-lapply(names(excel_list), function(sheet_name) {
-  
-  csv_file <- paste0("output/", sheet_name, ".csv")
-  
-  write.csv(excel_list[[sheet_name]], file = csv_file, row.names = FALSE)
-})
-
 # store each of the elements of a list as seperate objects
 for (sheet in sheet_names) {
   assign(sheet, read_excel(xlsxpath, sheet = sheet))
@@ -234,3 +223,43 @@ df4_acsa2 <- rm_percent_sign(df4_acsa2)
 df5_mcfc  <- rm_percent_sign(df5_mcfc)
 df6_mm24  <- rm_percent_sign(df6_mm24)
 df7_fans  <- rm_percent_sign(df7_fans)
+
+# Now that we've tidied up all the data, we save each df as a csv.
+# use original sheet names as file names
+
+# remove the one sheet we have not processed
+file_names <- sheet_names[-7]
+
+# put the dataframes in a list to process together
+df_list <- list(df1_bd,
+                df2_viab,
+                df3_cd11b,
+                df4_acsa2,
+                df5_mcfc,
+                df6_mm24,
+                df7_fans)
+
+# give elements of the list the original spreadsheet names
+names(df_list) <- file_names
+
+# save each as a csv file in the output folder (for other purposes)
+lapply(names(df_list), function(file_name) {
+  
+  csv_file <- paste0("output/", file_name, ".csv")
+  
+  write.csv(df_list[[file_name]], file = csv_file, row.names = FALSE)
+})
+
+# save the sheet we did not include in the wrangling
+df_mfi <- as.data.frame(excel_list[7])
+mfi_csv <- paste0("output/", sheet_names[7], ".csv")
+write_csv(df_mfi, file = mfi_csv)
+
+
+###
+# Data Visualisation and Analaysis
+###
+
+
+
+          
