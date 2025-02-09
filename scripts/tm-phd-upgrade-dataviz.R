@@ -12,7 +12,7 @@ path <- file.path("home", "tmurphy", "phd_work",
 # load necessary packages
 install.packages("pacman")
 library(pacman)
-p_load("readxl", "tidyverse")
+p_load("readxl", "tidyverse", "ggsci")
 
 # Data exported as multi-sheet .xlsx file. Read in each sheet and store as
 # seperate objects.
@@ -257,9 +257,148 @@ write_csv(df_mfi, file = mfi_csv)
 
 
 ###
-# Data Visualisation and Analaysis
+# Data Visualisation and Analysis
 ###
 
+# specify some aesthetic options that can be added to any ggplot.
+toms_theme <- list(
+  theme_linedraw(),
+  theme(
+    legend.position = "none",
+    axis.title = element_text(size = 24),
+    axis.text = element_text(size =18),
+    panel.background = element_rect(fill = "white", colour = NA),
+    #panel.grid.major = element_blank(),
+    #panel.grid.minor = element_blank()
+  )
+)
+## df1 analysis
+# summarise the df1 data to plot
+df1_sum <- df1_bd %>% 
+  group_by(sample_type) %>% 
+  summarise(
+    mean_cells_pct_total = mean(cells_pct_total, na.rm = TRUE),
+    sd_cells_pct_total = sd(cells_pct_total, na.rm = TRUE)
+  )
+# Give better names for graphing purposes, re-level factors for bar ordering.
+df1_sum[1,1] <- "Post"
+df1_sum[2,1] <- "Pre"
+df1_sum <- df1_sum[c(2,1),]
+df1_sum$sample_type <- factor(df1_sum$sample_type, levels = c("Pre", "Post"))
+
+# make the plot from the summarised data.
+p1_bdbar <- ggplot(df1_sum, aes(x = sample_type,
+                                y = mean_cells_pct_total,
+                                fill = sample_type)) +
+  geom_bar(stat = "identity", width =0.3, position = position_dodge()) +
+  geom_errorbar(aes(
+    ymin = mean_cells_pct_total - sd_cells_pct_total,
+    ymax = mean_cells_pct_total + sd_cells_pct_total
+  ),
+  width = 0.2,
+  position = position_dodge(0.7)
+  ) +
+  labs(
+    x = "Debris removal status",
+    y = "% Cells"
+  ) +
+  theme_linedraw() +
+  scale_fill_ucscgb()
+
+# add the data points as dots, requires refactoring sample_type in df1_bd
+as.factor(df1_bd$sample_type)
+df1_bd$sample_type <- fct_recode(df1_bd$sample_type,
+                                           Pre = "pre-debris",
+                                           Post = "post-debris")
+p1_bdbar + geom_jitter(
+  data = df1_bd,
+  aes(x = sample_type,
+      y = cells_pct_total),
+  width = 0.1,
+  size = 2
+)
+
+p1_bdbar <- p1_bdbar + toms_theme
+p1_bdbar  
+
+p1_file <- paste0("output/", sheet_names[1], "_1", ".png")
+ggsave(filename = p1_file, device = "png", dpi = 300, height = 5, width = 5)   
 
 
-          
+# get summary statistics for results section (make this reusable function)
+generate_summary <- function(data) {
+  #get dataframe name as string
+  data_name <- deparse(substitute(data))
+  
+  # calculate summary stats foi any numeric columns in the dataframe
+  summary_data <- data %>% 
+    summarise(across(
+      where(~ is.numeric(.x)),
+      list(mean = ~mean(.x, na.rm =TRUE),
+           sd = ~sd(.x, na.rm = TRUE))
+    ))
+  # create new object adding _summary as a suffix
+  summary_name <- paste0(data_name, "_summary")
+  
+  # assign to new data frame
+  assign(summary_name, summary_data, envir = .GlobalEnv)
+  
+}
+
+generate_summary(df1_bd)
+
+
+# df2 analysis
+
+# create the summary
+generate_summary(df2_viab)
+
+# create plot of viable cells percetnage
+p2_viability <- ggplot(df2_viab, aes(x = factor(1), y = cells_pct_viable_cells, fill = factor(1))) +
+  stat_summary(
+    fun = mean,
+    geom = "bar",
+    width = 0.3
+  ) +
+  scale_fill_ucscgb()+
+  
+  stat_summary(
+    fun.data = function(x) {
+      m <-  mean(x, na.rm = TRUE)
+      s <- sd(x, na.rm = TRUE)
+      data.frame(y = m, ymin = m - s, ymax = m + s)
+    },
+    geom = "errorbar",
+    width = 0.2,
+  ) +
+  geom_jitter(width = 0.1, size = 2) +
+  
+  labs(x = "Samples", y = "Viable cell %") +
+  theme_linedraw() +
+  toms_theme +
+  scale_x_discrete(breaks = NULL, labels = NULL)
+
+# plot similar plot for viable cells percentage of total
+p3_viability_total <- ggplot(df2_viab, aes(x = factor(1), y = cells_pct_viable_sample, fill = factor(1))) +
+  stat_summary(
+    fun = mean,
+    geom = "bar",
+    width = 0.3
+  ) +
+  scale_fill_ucscgb()[2] +
+  
+  stat_summary(
+    fun.data = function(x) {
+      m <-  mean(x, na.rm = TRUE)
+      s <- sd(x, na.rm = TRUE)
+      data.frame(y = m, ymin = m - s, ymax = m + s)
+    },
+    geom = "errorbar",
+    width = 0.2,
+  ) +
+  geom_jitter(width = 0.1, size = 2) +
+  
+  labs(x = "Samples", y = "Viable cell %") +
+  theme_linedraw() +
+  toms_theme +
+  scale_x_discrete(breaks = NULL, labels = NULL)
