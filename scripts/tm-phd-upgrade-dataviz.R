@@ -326,32 +326,45 @@ ggsave(filename = p1_file, device = "png", dpi = 300, height = 5, width = 5)
 
 
 # get summary statistics for results section (make this reusable function)
-generate_summary <- function(data) {
-  #get dataframe name as string
+generate_summary <- function(data, group.by = NULL) {
+  # get name of data frame as string
   data_name <- deparse(substitute(data))
   
-  # calculate summary stats foi any numeric columns in the dataframe
-  summary_data <- data %>% 
-    summarise(across(
-      where(~ is.numeric(.x)),
-      list(mean = ~mean(.x, na.rm =TRUE),
-           sd = ~sd(.x, na.rm = TRUE))
-    ))
-  # create new object adding _summary as a suffix
+  # if a grouping column is provided as argument, function groups data first
+  # beore calculating column by coumn summaries
+  if(!is.null(group.by)) {
+    grouping_column <- enquo(group.by)
+    summary_data <- data %>% 
+      group_by(!!grouping_column) %>% 
+      summarise(across(
+        where(is.numeric),
+        list(mean = ~ mean(.x, na.rm = TRUE),
+             sd = ~sd(.x, na.rm = TRUE))
+              ),
+        .groups = "drop")
+  } else {
+          summary_data <- data %>% 
+            summarise(across(
+              where(is.numeric),
+              list(means = ~ mean(.x, na.rm = TRUE),
+                   sd = ~ sd(.x, na.rm = TRUE))
+            ))
+  }
   summary_name <- paste0(data_name, "_summary")
-  
-  # assign to new data frame
   assign(summary_name, summary_data, envir = .GlobalEnv)
-  
-}
-
-generate_summary(df1_bd)
-
+  }
+ 
+# run our summary function on all data
+generate_summary(df1_bd, group.by = df1_bd$sample_type)
+df1_summary_filename <- paste0("output/", sheet_names[1], "_summary.csv")
+write_csv(df1_bd_summary, file = df1_summary_filename)
 
 # df2 analysis
 
 # create the summary
 generate_summary(df2_viab)
+df2_summary_filename <- paste0("output/", sheet_names[2], "_summary.csv")
+write_csv(df2_viab_summary, file = df2_summary_filename)
 
 # create plot of viable cells percetnage
 p2_viability <- ggplot(df2_viab, aes(x = factor(1), y = cells_pct_viable_cells, fill = factor(1))) +
@@ -385,7 +398,7 @@ p3_viability_total <- ggplot(df2_viab, aes(x = factor(1), y = cells_pct_viable_s
     geom = "bar",
     width = 0.3
   ) +
-  scale_fill_ucscgb()[2] +
+  scale_fill_manual(values = pal_ucscgb("default")(2)[2]) +
   
   stat_summary(
     fun.data = function(x) {
@@ -398,7 +411,167 @@ p3_viability_total <- ggplot(df2_viab, aes(x = factor(1), y = cells_pct_viable_s
   ) +
   geom_jitter(width = 0.1, size = 2) +
   
-  labs(x = "Samples", y = "Viable cell %") +
+  labs(x = "Samples", y = "Viable cell % of total events") +
   theme_linedraw() +
   toms_theme +
-  scale_x_discrete(breaks = NULL, labels = NULL)
+  scale_x_discrete(breaks = NULL, labels = NULL) +
+  scale_y_continuous(limits = c(0, 60))
+
+# save the two plots for this dataset
+p2_file <- paste0("output/", sheet_names[2], "_1", ".png")
+p3_file <-  paste0("output/", sheet_names[2], "_2", ".png")
+ggsave(plot = p2_viability, filename = p2_file, device = "png", dpi = 300, height = 5, width = 5)
+ggsave(plot = p3_viability_total, filename = p3_file, device = "png", dpi = 300, height = 5, width = 5)
+
+
+# df3 graphs & analysis
+generate_summary(df3_cd11b, group.by = df3_cd11b$condition)
+df3_summary_filename <- paste0("output/", sheet_names[3], "_summary.csv")
+write_csv(df3_cd11b_summary, file = df3_summary_filename)
+
+df3_cd11b <- df3_cd11b %>% 
+  mutate(condition = factor(condition,
+                             levels = c(
+                               "post_debris",
+                               "negative_fraction",
+                               "positive_fraction"
+                             )))
+
+p4_cd11b <- ggplot(df3_cd11b,
+                   aes(x = condition,
+                       y = cells_pct_viable_cells,
+                       fill = condition)) +
+  stat_summary(fun = mean,
+               geom = "bar",
+               width = 0.3) +
+  
+  stat_summary(fun.data = function(x) {
+    m <- mean(x, na.rm = TRUE)
+    s <- sd(x, na.rm = TRUE)
+    data.frame(y = m, ymin = m - s, ymax = m + s) 
+  },
+  geom = "errorbar",
+  width = 0.3) +
+  
+  geom_jitter(width = 0.1, 
+              size = 2) +
+  
+  labs(x = "Fraction",
+       y = "Viable cells %") +
+  theme_linedraw() +
+  scale_fill_ucscgb() +
+  toms_theme +
+  theme(legend.position = "none")
+  
+# make same graph for total of  sample viability
+p5_cd11b <- ggplot(df3_cd11b,
+                   aes(x = condition,
+                       y = cells_pct_viable_sample,
+                       fill = condition)) +
+  stat_summary(fun = mean,
+               geom = "bar",
+               width = 0.3) +
+  
+  stat_summary(fun.data = function(x) {
+    m <- mean(x, na.rm = TRUE)
+    s <- sd(x, na.rm = TRUE)
+    data.frame(y = m, ymin = m - s, ymax = m + s) 
+  },
+  geom = "errorbar",
+  width = 0.3) +
+  
+  geom_jitter(width = 0.1, 
+              size = 2) +
+  
+  labs(x = "Fraction",
+       y = "Viable cells % of total events") +
+  theme_linedraw() +
+  scale_fill_manual(values = pal_ucscgb("default")(6)[4:6]) +
+  toms_theme +
+  theme(legend.position = "none")
+
+# save both plots
+# save the two plots for this dataset
+p4_file <- paste0("output/", sheet_names[3], "_1", ".png")
+p5_file <-  paste0("output/", sheet_names[3], "_2", ".png")
+ggsave(plot = p4_cd11b, filename = p4_file, device = "png", dpi = 300, height = 5, width = 8)
+ggsave(plot = p5_cd11b, filename = p5_file, device = "png", dpi = 300, height = 5, width = 8)
+
+# df6 acsa2 dataset
+# generate summary
+generate_summary(df4_acsa2, group.by = df4_acsa2$condition)
+df4_summary_filename <- paste0("output/", sheet_names[4], "_summary.csv")
+write_csv(df4_acsa2, file = df4_summary_filename)
+
+# factorise the conditons for plotting order to be correct
+df4_acsa2 <- df4_acsa2 %>% 
+  mutate(condition = factor(condition,
+                            levels = c(
+                              "post_debris",
+                              "negative_fraction",
+                              "positive_fraction"
+                            )))
+
+# plots
+p6_acsa2 <- ggplot(df4_acsa2,
+                   aes(x = condition,
+                       y = cells_pct_viable_cells,
+                       fill = condition)) +
+  stat_summary(fun = mean,
+               geom = "bar",
+               width = 0.3) +
+  
+  stat_summary(fun.data = function(x) {
+    m <- mean(x, na.rm = TRUE)
+    s <- sd(x, na.rm = TRUE)
+    data.frame(y = m, ymin = m - s, ymax = m + s) 
+  },
+  geom = "errorbar",
+  width = 0.3) +
+  
+  geom_jitter(width = 0.15, 
+              size = 2) +
+  
+  labs(x = "Fraction",
+       y = "Viable cells %") +
+  theme_linedraw() +
+  scale_fill_ucscgb() +
+  #scale_fill_manual(values = pal_ucscgb("default")(6)[4:6]) +
+  toms_theme +
+  theme(legend.position = "none")
+
+p7_acsa2 <- ggplot(df4_acsa2,
+                   aes(x = condition,
+                       y = cells_pct_viable_sample,
+                       fill = condition)) +
+  stat_summary(fun = mean,
+               geom = "bar",
+               width = 0.3) +
+  
+  stat_summary(fun.data = function(x) {
+    m <- mean(x, na.rm = TRUE)
+    s <- sd(x, na.rm = TRUE)
+    data.frame(y = m, ymin = m - s, ymax = m + s) 
+  },
+  geom = "errorbar",
+  width = 0.3) +
+  
+  geom_jitter(width = 0.15, 
+              size = 2) +
+  
+  labs(x = "Fraction",
+       y = "Viable cells % of total events") +
+  theme_linedraw() +
+  #scale_fill_ucscgb() +
+  scale_fill_manual(values = pal_ucscgb("default")(6)[4:6]) +
+  toms_theme +
+  theme(legend.position = "none")
+
+# save the two acsa graphs
+p6_file <- paste0("output/", sheet_names[4], "_1", ".png")
+p7_file <-  paste0("output/", sheet_names[4], "_2", ".png")
+ggsave(plot = p6_acsa2, filename = p6_file, device = "png", dpi = 300, height = 5, width = 8)
+ggsave(plot = p7_acsa2, filename = p7_file, device = "png", dpi = 300, height = 5, width = 8)
+
+
+# df5 analysis

@@ -1,0 +1,13 @@
+sample,total_events,cells_pct_total,cells_count,cells_pct_viable_cells,cells_count_viable,cells_pct_viable_sample,condition
+A (fixed) PBS.fcs,207883,56.9,118285,40.3,47716,23,post_debris
+A- (fixed).fcs,873000,30.7,268229,33.7,90457,10.4,negative_fraction
+A+ (fixed).fcs,787000,9.870000000000001,77728,53.7,41738,5.3,positive_fraction
+B (fixed) PBS.fcs,1270000,24.2,306516,37.8,116012,9.17,post_debris
+B- (fixed).fcs,1400000,14.6,204389,33.3,68097,4.859999999999999,negative_fraction
+B+ (fixed).fcs,816000,6.52,53194,52.9,28148,3.4499999999999997,positive_fraction
+C (fixed) HBSS.fcs,1130000,66,743000,40.1,298215,26.5,post_debris
+C- (fixed).fcs,976000,36.8,359671,34.7,124956,12.8,negative_fraction
+C+ (fixed).fcs,1000000,12.8,128215,50.2,64300,6.4,positive_fraction
+D (fixed) HBSS.fcs,1020000,29.5,299181,46,137771,13.6,post_debris
+D- (fixed).fcs,1220000,24.8,303624,37.5,113808,9.3,negative_fraction
+D+ (fixed).fcs,1540000,13.2,203404,50.1,101917,6.619999999999999,positive_fraction
