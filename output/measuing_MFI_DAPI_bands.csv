@@ -1,4 +1,4 @@
-measuing_MFI_DAPI_bands.parameter,measuing_MFI_DAPI_bands.FVBN_DAPI.fcs,measuing_MFI_DAPI_bands....3
+parameter,FVBN_DAPI.fcs,...3
 Nuclei/Single DAPI+ nuclei | Median (DAPI V450-A),586000,NA
 Nuclei/Single DAPI+ nuclei | Median (FSC-A),383301,NA
 Nuclei/DAPI+ doublets | Median (DAPI V450-A),1170000,1.9965870307167235

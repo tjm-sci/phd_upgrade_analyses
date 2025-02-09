@@ -10,9 +10,15 @@ path <- file.path("home", "tmurphy", "phd_work",
 
 
 # load necessary packages
-install.packages("pacman")
+if (!require(pacman)){
+  install.packages("pacman")
+}
 library(pacman)
-p_load("readxl", "tidyverse", "ggsci")
+p_load("readxl", "tidyverse", "ggsci", "ggdist")
+if (!require(remotes)){
+  install.packages("remotes")
+}
+remotes::install_github('jorvlan/raincloudplots')
 
 # Data exported as multi-sheet .xlsx file. Read in each sheet and store as
 # seperate objects.
@@ -148,6 +154,17 @@ df5_mcfc <- df5_mcfc %>%
       "2023-08-17_TM gentleMACS brain sort_Sort 1608 C.fcs" ~ "FACS_sort_1608_C.fcs",
       "2023-08-17_TM gentleMACS brain sort_Sort 1608 D.fcs" ~ "FACS_sort_1608_D.fcs",
       .default = sample
+    )
+  )
+
+# add column for grouping samples with
+df5_mcfc <- df5_mcfc %>% 
+  mutate(
+    sample_group = case_when(
+      str_detect(sample, "MACS Pre-sort") ~ "pre_sort",
+      str_detect(sample, "MACS -") ~ "MACS_neuronal",
+      str_detect(sample, "MACS \\+") ~ "MACS_glial",
+      str_detect(sample, "FACS") ~ "FACS"
     )
   )
 
@@ -574,4 +591,114 @@ ggsave(plot = p6_acsa2, filename = p6_file, device = "png", dpi = 300, height = 
 ggsave(plot = p7_acsa2, filename = p7_file, device = "png", dpi = 300, height = 5, width = 8)
 
 
-# df5 analysis
+# df5
+# make summary of dataset and save
+generate_summary(df5_mcfc, group.by = df5_mcfc$sample_group)
+df5_summary_filename <- paste0("output/", sheet_names[5], "_summary.csv")
+write_csv(df5_mcfc_summary, file = df5_summary_filename)
+
+# plotting df5
+toms_theme2 <- list(
+  theme_linedraw(),
+  theme(
+    #legend.position = "none",
+    axis.title = element_text(size = 24),
+    axis.text = element_text(size =18),
+    panel.background = element_rect(fill = "white", colour = NA)
+  )
+)
+
+df5_mcfc <- df5_mcfc %>% 
+  mutate(
+    sample_group = factor(sample_group,
+      levels = c("pre_sort",
+                 "MACS_glial",
+                 "MACS_neuronal",
+                 "FACS")
+    )
+  )
+        
+df5_long <- df5_mcfc %>% 
+  pivot_longer(
+    cols = c(
+      oligodendrocyte_pct,
+      microglia_pct,
+      astrocyte_pct,
+      neurons_hi_pct,
+      neurons_lo_pct,
+    ),
+    names_to = "cell_type",
+    values_to = "pct"
+  ) %>% 
+  
+  mutate(
+    cell_type = factor(cell_type,
+                       levels = c(
+                         "oligodendrocyte_pct",
+                         "microglia_pct",
+                         "astrocyte_pct",
+                         "neurons_hi_pct",
+                         "neurons_lo_pct"
+                       )
+                       )
+  )
+
+p8 <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
+  
+  stat_summary(
+    fun = mean,
+    geom = "bar",
+    position = position_dodge(width = 0.9),
+    width = 0.8
+  ) +
+  
+  stat_summary(
+    fun.data = mean_sdl,
+    fun.args = list(mult = 1),
+    geom = "errorbar",
+    position = position_dodge(width = 0.9),
+    width = 0.2
+  ) +
+  
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 1),
+    size = 1.5
+  ) +
+  
+  labs(x = "Sample type",
+       y = "% of total events",
+       color = "cell type") +
+  scale_fill_ucscgb() + 
+  scale_y_continuous(breaks = seq(0, 80, by = 10)) +
+  toms_theme2
+
+# do the same for the absolute cell count
+
+df5_long_counts <- df5_mcfc %>% 
+  pivot_longer(
+    cols = c(
+      oligodendrocyte_count,
+      microglia_count,
+      astrocyte_count,
+      neurons_hi_count,
+      neurons_lo_count,
+    ),
+    names_to = "cell_type",
+    values_to = "count"
+  ) %>% 
+  
+  mutate(
+    cell_type = factor(cell_type,
+                       levels = c(
+                         "oligodendrocyte_count",
+                         "microglia_count",
+                         "astrocyte_count",
+                         "neurons_hi_count",
+                         "neurons_lo_count"
+                       )
+    )
+  )
+
+
+
+ 
