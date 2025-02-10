@@ -1074,3 +1074,113 @@ ggsave(plot = p15_mm24_box_counts, filename = p15_filename, device = "png", dpi 
 
 
 # df7
+# encode the sample name as a factor
+df7_fans$sample <- as.factor(df7_fans$sample)
+# Make a seprate plot for each cell type as a % of DAPI+ nuclei
+nuclei_types <- c("microglial_nuclei_pct_dapi",
+                  "astrocyte_nuclei_pct_dapi",
+                  "oligo_nuclei_pct_dapi",
+                  "neuron_nuclei_pct_dapi")
+plot_list <- list()
+
+# loop over each nuclei type column and make a plot
+for (nt in nuclei_types){
+  p <- ggplot(df7_fans, aes_string(x = "experiment", y = nt, fill = "experiment"))+
+    geom_half_boxplot(
+      nudge = 0.03,
+      side = "l",
+      width = 1,
+      outlier.shape = NA,
+      position = position_dodge(width = 0.9)
+    )+
+    # plot dots on right
+    geom_half_point(
+      width = 0.2,
+      shape = 21,
+      size = 3,
+      inherit.aes = TRUE,
+      side = "r",
+      alpha = 0.8,
+      position = position_dodge(width = 0.9)
+    ) +
+    labs(
+      title = paste(gsub("nuclei_pct_dapi", "", nt),"nuclei"),
+      x = ("Expeirment"),
+      y = "% DAPI+ events"
+    ) +
+    toms_theme_no_legend +
+    scale_fill_aaas()
+  plot_list[[nt]] <- p
+}
+# save each plot as single object and adjust y axes
+pu1 <- plot_list[["microglial_nuclei_pct_dapi"]] + scale_y_continuous(limits = c(0,5) )
+sox2 <- plot_list[["astrocyte_nuclei_pct_dapi"]] + scale_y_continuous(limits = c(0,6))
+sox10 <-plot_list[["oligo_nuclei_pct_dapi"]] + scale_y_continuous(limits = c(4,16))
+neun <- plot_list[["neuron_nuclei_pct_dapi"]] + scale_y_continuous(limits = c(45, 75))
+
+# use grid extra to arrange plots in a grid
+library(gridExtra)
+fans_dapi_pct <- grid.arrange(
+  pu1,
+  sox2, 
+  sox10,
+  neun 
+)
+
+# repeat the process for the median fluorescnce intensity
+nuclei_types_mfi <- c("microglial_nuclei_mfi",
+                      "astrocyte_nuclei_mfi",
+                      "oligo_nuclei_mfi",
+                      "neuron_nuclei_mfi")
+plot_list_mfi <- list()
+
+# loop over each nuclei type column and make a plot
+for (nt_mfi in nuclei_types_mfi){
+  p_mfi <- ggplot(df7_fans, aes_string(x = "experiment", y = nt_mfi, fill = "experiment"))+
+    geom_half_boxplot(
+      nudge = 0.03,
+      side = "l",
+      width = 1,
+      outlier.shape = NA,
+      position = position_dodge(width = 0.9)
+    )+
+    # plot dots on right
+    geom_half_point(
+      inherit.aes = TRUE,
+      #aes(color = "experiment", fill = "sample"),
+      width = 0.2,
+      shape = 21,
+      size = 3,
+      side = "r",
+      alpha = 0.8,
+      position = position_dodge(width = 0.9)
+    ) +
+    labs(
+      title = paste(gsub("nuclei_mfi", "", nt_mfi),"MFI"),
+      x = "Experiment",
+      y = "Channel MFI"
+    ) +
+    toms_theme_no_legend +
+    scale_fill_aaas()
+  plot_list_mfi[[nt_mfi]] <- p_mfi
+}
+
+# save each plot as single object and adjust y axes
+pu1_mfi <- plot_list_mfi[["microglial_nuclei_mfi"]] + scale_y_continuous(limits = c(100, 600))
+sox2_mfi <- plot_list_mfi[["astrocyte_nuclei_mfi"]] + scale_y_continuous(limits = c(0, 700))
+sox10_mfi <-plot_list_mfi[["oligo_nuclei_mfi"]]     + scale_y_continuous(limits = c(200, NA))
+neun_mfi <- plot_list_mfi[["neuron_nuclei_mfi"]]    + scale_y_continuous(limits = c(500, NA))
+
+# use grid extra to arrange plots in a grid
+library(gridExtra)
+fans_dapi_mfi <- grid.arrange(
+  pu1_mfi,
+  sox2_mfi, 
+  sox10_mfi,
+  neun_mfi 
+)
+
+dapi_pct_grid_filename <- paste0("output/", sheet_names[7], "_1.png")
+mfi_grid_filename <- paste0("output/", sheet_names[7], "_2.png")
+ggsave(filename = dapi_pct_grid_filename, plot = fans_dapi_pct, dpi = 300,height = 10, width = 10 )
+ggsave(filename = mfi_grid_filename, plot = fans_dapi_mfi, dpi = 300, height = 10, width = 10)
