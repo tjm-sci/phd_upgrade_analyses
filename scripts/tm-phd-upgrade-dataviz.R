@@ -14,7 +14,7 @@ if (!require(pacman)){
   install.packages("pacman")
 }
 library(pacman)
-p_load("readxl", "tidyverse", "ggsci", "ggdist")
+p_load("readxl", "tidyverse", "ggsci", "ggdist", "scales")
 p_load_current_gh("erocoar/gghalves")
 # Data exported as multi-sheet .xlsx file. Read in each sheet and store as
 # seperate objects.
@@ -606,6 +606,7 @@ df5_mcfc <- df5_mcfc %>%
                  "FACS")
     )
   )
+
 # create a longer format dataframe where rows are repeated once for each cell
 # type/ sample-type combo
 df5_long <- df5_mcfc %>% 
@@ -640,11 +641,10 @@ mean_sdl_pos <- function(x, mult = 1){
   m <- mean(x)
   s <- sd(x)
   ymin <- m - mult * s
-  ymax <- m + mult *s
+  ymax <- m + mult * s
   if (ymin < 0) ymin <- 0
   c(y = m, ymin = ymin, ymax = ymax)
 }
-
 
 # create a grouped bar plot of the data
 p8_mcfc_bar <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
@@ -765,14 +765,15 @@ p10_mcfc_counts_bar <- ggplot(df5_long_counts, aes(x = sample_group, y = count, 
     alpha = 0.8
   ) +
   
-  labs(
+  scale_y_log10(
+    labels = label_log(base = 10, digits = 2)
+    )+
+    labs(
     x = "Sample type",
     y = "Cell count",
     color = "Cell type"
   ) +
-  
   scale_fill_aaas() + 
-  #scale_y_continuous(breaks = seq(0, 90, by = 10)) +
   toms_theme_legend
 
 # Half box plots, half dot for count data.
@@ -802,6 +803,8 @@ p11_mcfc_half <- ggplot(df5_long_counts, aes(x = sample_group, y = count, fill =
     y = "Cell count",
     fill = "Cell type"
   ) +
+  scale_y_log10(labels = label_log(base = 10, digits = 2)
+  ) +
   scale_fill_aaas() +
   toms_theme_legend
 
@@ -818,4 +821,256 @@ ggsave(plot = p10_mcfc_counts_bar, filename = p10_file, device = "png", dpi = 30
 ggsave(plot = p11_mcfc_half, filename = p11_file, device = "png", dpi = 300, height = 5, width = 12)
 
 
-# Statistical testinng 
+# inferential statistics:
+# to directly compare MACS versus FACS we need to take only matched samples
+# that were present for MACS and FACS analyses. 
+# We need to compare the percentage neurons in MACS_neuronal and the counts
+
+# FILL THIS IN #
+
+# df6 analysis 
+# first add a cell fraction column that groups based on presence of string in 
+# sample name column
+df6_mm24 <- df6_mm24 %>% mutate(
+  # new column describing what cell type we expect in each sample
+  MACS_fraction = case_when(
+    str_detect(sample, "Astrocytes") ~ "ACSA2_fraction",
+    str_detect(sample, "Microglia")  ~ "CD11B_fraction",
+    str_detect(sample, "Oligos") ~ "O4_fraction",
+    str_detect(sample, "Neurons") ~ "neuron_fraction"
+  )
+) %>% 
+  # order these as a factor for consistent plot order
+  mutate(MACS_fraction = factor(MACS_fraction,
+                                levels = c(
+                                  "O4_fraction",
+                                  "CD11B_fraction",
+                                  "ACSA2_fraction",
+                                  "neuron_fraction"
+                                ))) %>% 
+  #renaming the columns to distigusih them from our new MACS_fraction column
+  rename(O4_PE_pct = oligodendrocyte_pct) %>% 
+  rename(CD11B_APC_pct = microglia_pct ) %>% 
+  rename(ACSA2_FITC_pct = astrocyte_pct) %>% 
+  rename(neuron_hi_pct = neurons_hi_pct) %>% 
+  rename(neuron_lo_pct = neurons_lo_pct) %>% 
+  # do the same for the count columns
+  rename(O4_PE_count = oligodendrocyte_count) %>% 
+  rename(CD11B_APC_count = microglia_count) %>% 
+  rename(ACSA2_FITC_count = astrocyte_count) %>% 
+  rename(neuron_hi_count = neurons_hi_count) %>% 
+  rename(neuron_lo_count = neurons_lo_count) 
+
+# save the updated data as a csv  
+df6_mm24_filename <- paste0("output/", sheet_names[6], ".csv")
+write_csv(x = df6_mm24, file = df6_mm24_filename)
+# generate summary statistics, save that as a seperate csv too.
+df6_mm24_summary <- generate_summary(df6_mm24, group.by = df6_mm24$MACS_fraction)
+df6_mm24_summary_filename <- paste0("output/", sheet_names[6], "_summary.csv")
+write_csv(x = df6_mm24_summary, file = df6_mm24_summary_filename)
+
+
+# As we did with df5, we will now make the data longer so there is repeated
+# rows for the per cell type data 
+df6_long_pct <- df6_mm24 %>% 
+  pivot_longer(
+    cols = c(
+      O4_PE_pct,
+      CD11B_APC_pct,
+      ACSA2_FITC_pct,
+      neuron_hi_pct,
+      neuron_lo_pct,
+    ),
+    names_to = "cell_type_marker",
+    values_to = "pct"
+  ) %>% 
+  # Making the new column an ordered factor
+  mutate(
+    cell_type_marker = factor(cell_type_marker, levels = c(
+                         "O4_PE_pct",
+                         "CD11B_APC_pct",
+                         "ACSA2_FITC_pct",
+                         "neuron_hi_pct",
+                         "neuron_lo_pct"
+                       )
+    )
+  )
+
+# repeat for the count datq
+df6_long_count <- df6_mm24 %>% 
+  pivot_longer(
+    cols = c(
+      O4_PE_count,
+      CD11B_APC_count,
+      ACSA2_FITC_count,
+      neuron_hi_count,
+      neuron_lo_count,
+    ),
+    names_to = "cell_type_marker",
+    values_to = "count"
+  ) %>% 
+  # Making the new column an ordered factor
+  mutate(
+    cell_type_marker = factor(cell_type_marker, levels = c(
+      "O4_PE_count",
+      "CD11B_APC_count",
+      "ACSA2_FITC_count",
+      "neuron_hi_count",
+      "neuron_lo_count"
+    )
+    )
+  )
+
+# make the graphs as we did before with the previous df5
+# grouped bar plot
+
+# create a grouped bar plot of the percentage data
+p12_mm24_pct_bar <- ggplot(df6_long_pct, aes(x = MACS_fraction, y = pct, fill = cell_type_marker)) +
+  
+  stat_summary(
+    fun = mean,
+    geom = "bar",
+    position = position_dodge(width = 0.9),
+    width = 0.8
+  ) +
+  
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.9),
+    size = 1.8,
+    shape = 21
+  ) +
+  
+  stat_summary(
+    fun.data = mean_sdl_pos,
+    fun.args = list(mult = 1),
+    geom = "errorbar",
+    position = position_dodge(width = 0.9),
+    width = 0.5,
+    linewidth = 0.5,
+    alpha = 0.8
+  ) +
+  
+  labs(
+    x = "Target population",
+    y = "Percentage of total events (%)",
+    color = "cell_type_marker"
+  ) +
+  
+  scale_fill_aaas() + 
+  scale_y_continuous(breaks = seq(0, 90, by = 10)) +
+  toms_theme_legend
+
+# Box and dot plots for percentage data
+p13_mm24_pct_box <- ggplot(df6_long_pct, aes(x = MACS_fraction, y = pct, fill = cell_type_marker)) +
+  
+  # plot boxplots on left
+  geom_half_boxplot(
+    nudge = 0.03,
+    side = "l",
+    width = 1,
+    outlier.shape = NA,
+    position = position_dodge(width = 0.9)
+  )+
+  # plot dots on right
+  geom_half_point(
+    width = 0.2,
+    shape = 21,
+    size = 2,
+    inherit.aes = TRUE,
+    side = "r",
+    alpha = 0.8,
+    position = position_dodge(width = 0.9)
+  ) +
+  
+  labs(
+    x = "Target population",
+    y = "Percentage of total events (%)",
+    fill = "cell_type_marker"
+  ) +
+  scale_fill_aaas() +
+  toms_theme_legend
+
+# Repeat for the cell count data
+# create a grouped bar plot of the percentage data
+p14_mm24_count_bar <- ggplot(df6_long_count, aes(x = MACS_fraction, y = count, fill = cell_type_marker)) +
+  
+  stat_summary(
+    fun = mean,
+    geom = "bar",
+    position = position_dodge(width = 0.9),
+    width = 0.8
+  ) +
+  
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.9),
+    size = 1.8,
+    shape = 21
+  ) +
+  
+  stat_summary(
+    fun.data = mean_sdl_pos,
+    fun.args = list(mult = 1),
+    geom = "errorbar",
+    position = position_dodge(width = 0.9),
+    width = 0.5,
+    linewidth = 0.5,
+    alpha = 0.8
+  ) +
+  scale_y_log10(
+    labels = label_log(base = 10, digits = 2)
+  ) +
+  labs(
+    x = "Target population",
+    y = "Cell count",
+    color = "cell_type_marker"
+  ) +
+  
+  scale_fill_aaas() + 
+  toms_theme_legend
+
+# Box and dot plots for percentage data
+p15_mm24_box_counts <- ggplot(df6_long_count, aes(x = MACS_fraction, y = count, fill = cell_type_marker)) +
+  
+  # plot boxplots on left
+  geom_half_boxplot(
+    nudge = 0.03,
+    side = "l",
+    width = 1,
+    outlier.shape = NA,
+    position = position_dodge(width = 0.9)
+  )+
+  # plot dots on right
+  geom_half_point(
+    width = 0.2,
+    shape = 21,
+    size = 2,
+    inherit.aes = TRUE,
+    side = "r",
+    alpha = 0.8,
+    position = position_dodge(width = 0.9)
+  ) +
+  scale_y_log10(
+    labels = label_log(base = 10, digits = 2)
+    ) +
+                  
+  labs(
+    x = "Target population",
+    y = "Cell Count",
+    fill = "cell_type_marker"
+  ) +
+  scale_fill_aaas() +
+  toms_theme_legend
+
+# save the df6 plots 
+p12_filename <- paste0("output/", sheet_names[6], "_plot_1.png")
+p13_filename <- paste0("output/", sheet_names[6], "_plot_2.png")
+p14_filename <- paste0("output/", sheet_names[6], "_plot_3.png")
+p15_filename <- paste0("output/", sheet_names[6], "_plot_4.png")
+
+ggsave(plot = p12_mm24_pct_bar, filename = p12_filename, device = "png", dpi = 300, height = 5, width = 12)
+ggsave(plot = p13_mm24_pct_box, filename = p13_filename, device = "png", dpi = 300, height = 5, width = 12)
+ggsave(plot = p14_mm24_count_bar, filename = p14_filename, device = "png", dpi = 300, height = 5, width = 12)
+ggsave(plot = p15_mm24_box_counts, filename = p15_filename, device = "png", dpi = 300, height = 5, width = 12)
+
+
+# df7

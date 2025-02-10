@@ -1,4 +1,4 @@
-<fct>,total_events_mean,total_events_sd,cells_pct_total_mean,cells_pct_total_sd,cells_count_mean,cells_count_sd,cells_pct_viable_cells_mean,cells_pct_viable_cells_sd,cells_count_viable_mean,cells_count_viable_sd,cells_pct_viable_sample_mean,cells_pct_viable_sample_sd
-post_debris,311190,135033.01363000087,28.82,5.792408825350641,84162.2,27952.013571476386,64.6,3.0943496893531592,55043,19640.84947246427,18.56,3.3448467827390846
+<chr>,total_events_mean,total_events_sd,cells_pct_total_mean,cells_pct_total_sd,cells_count_mean,cells_count_sd,cells_pct_viable_cells_mean,cells_pct_viable_cells_sd,cells_count_viable_mean,cells_count_viable_sd,cells_pct_viable_sample_mean,cells_pct_viable_sample_sd
 negative_fraction,908986.5,892387.849740515,25.049999999999997,0.9192388155425123,223529,215046.7285080152,91.25,1.3435028842544443,205386.5,199162.98888222178,22.85,0.49497474683058273
 positive_fraction,168028.5,24350.636223721136,65.8,0.7071067811865476,110602,17249.16282026464,17.6,0.424264068711927,19428.5,2553.362586864623,11.6,0.141421356237309
+post_debris,311190,135033.01363000087,28.82,5.792408825350641,84162.2,27952.013571476386,64.6,3.0943496893531592,55043,19640.84947246427,18.56,3.3448467827390846
