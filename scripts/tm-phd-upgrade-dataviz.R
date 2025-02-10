@@ -632,8 +632,22 @@ df5_long <- df5_mcfc %>%
                        )
                        )
   )
+
+# We need to prevent the error bars form going below zero. Write a function to
+# force lower error bar to zero if negative value is assumed 
+
+mean_sdl_pos <- function(x, mult = 1){
+  m <- mean(x)
+  s <- sd(x)
+  ymin <- m - mult * s
+  ymax <- m + mult *s
+  if (ymin < 0) ymin <- 0
+  c(y = m, ymin = ymin, ymax = ymax)
+}
+
+
 # create a grouped bar plot of the data
-p8 <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
+p8_mcfc_bar <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
   
   stat_summary(
     fun = mean,
@@ -642,17 +656,20 @@ p8 <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
     width = 0.8
   ) +
   
+   geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.9),
+    size = 1.8,
+    shape = 21
+  ) +
+  
   stat_summary(
-    fun.data = mean_sdl,
+    fun.data = mean_sdl_pos,
     fun.args = list(mult = 1),
     geom = "errorbar",
     position = position_dodge(width = 0.9),
-    width = 0.2
-  ) +
-  
-  geom_jitter(
-    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.9),
-    size = 1.5
+    width = 0.5,
+    linewidth = 0.5,
+    alpha = 0.8
   ) +
   
   labs(
@@ -662,21 +679,21 @@ p8 <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
     ) +
   
   scale_fill_aaas() + 
-  scale_y_continuous(breaks = seq(0, 80, by = 10)) +
+  scale_y_continuous(breaks = seq(0, 90, by = 10)) +
   toms_theme_legend
 
-# Half box plots
+# Half box plots, half dot
 p9_mcfc_rncl <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
  
-   # overlay boxplot
+   # plot boxplots on left
   geom_half_boxplot(
-    nudge = 0.01,
+    nudge = 0.03,
     side = "l",
-    width = 0.8,
+    width = 1,
     outlier.shape = NA,
-    position = position_dodge(width = 0.8)
+    position = position_dodge(width = 0.9)
   )+
-  
+  # plot dots on right
   geom_half_point(
     width = 0.2,
     shape = 21,
@@ -684,7 +701,7 @@ p9_mcfc_rncl <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type
     inherit.aes = TRUE,
     side = "r",
     alpha = 0.8,
-    position = position_dodge(width = 0.8)
+    position = position_dodge(width = 0.9)
     ) +
   
   labs(
@@ -694,8 +711,6 @@ p9_mcfc_rncl <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type
   ) +
   scale_fill_aaas() +
   toms_theme_legend
-    
-  
 
 # do the same for the absolute cell count
 # i.e. create longer data frame, then code the cell counts as ordered factors
@@ -724,6 +739,83 @@ df5_long_counts <- df5_mcfc %>%
     )
   )
 
+# create a grouped bar plot of the data for the count data.
+p10_mcfc_counts_bar <- ggplot(df5_long_counts, aes(x = sample_group, y = count, fill = cell_type)) +
+  
+  stat_summary(
+    fun = mean,
+    geom = "bar",
+    position = position_dodge(width = 0.9),
+    width = 0.8
+  ) +
+  
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.9),
+    size = 1.8,
+    shape = 21
+  ) +
+  
+  stat_summary(
+    fun.data = mean_sdl_pos,
+    fun.args = list(mult = 1),
+    geom = "errorbar",
+    position = position_dodge(width = 0.9),
+    width = 0.5,
+    linewidth = 0.5,
+    alpha = 0.8
+  ) +
+  
+  labs(
+    x = "Sample type",
+    y = "Cell count",
+    color = "Cell type"
+  ) +
+  
+  scale_fill_aaas() + 
+  #scale_y_continuous(breaks = seq(0, 90, by = 10)) +
+  toms_theme_legend
+
+# Half box plots, half dot for count data.
+p11_mcfc_half <- ggplot(df5_long_counts, aes(x = sample_group, y = count, fill = cell_type)) +
+  
+  # overlay boxplot
+  geom_half_boxplot(
+    nudge = 0.03,
+    side = "l",
+    width = 1,
+    outlier.shape = NA,
+    position = position_dodge(width = 0.9)
+  )+
+  
+  geom_half_point(
+    width = 0.2,
+    shape = 21,
+    size = 2,
+    inherit.aes = TRUE,
+    side = "r",
+    alpha = 0.8,
+    position = position_dodge(width = 0.9)
+  ) +
+  
+  labs(
+    x = "Sample Type",
+    y = "Cell count",
+    fill = "Cell type"
+  ) +
+  scale_fill_aaas() +
+  toms_theme_legend
+
+# save the 4 plots made for df5
+p8_file <- paste0("output/", sheet_names[5], "_bars_pct", ".png")
+p9_file <-  paste0("output/", sheet_names[5], "_box_pct", ".png")
+p10_file <-  paste0("output/", sheet_names[5], "_bars_count", ".png")
+p11_file <-  paste0("output/", sheet_names[5], "_box_count", ".png")
+
+# save em up
+ggsave(plot = p8_mcfc_bar , filename = p8_file, device = "png", dpi = 300, height = 5, width = 12)
+ggsave(plot = p9_mcfc_rncl, filename = p9_file, device = "png", dpi = 300, height = 5, width = 12)
+ggsave(plot = p10_mcfc_counts_bar, filename = p10_file, device = "png", dpi = 300, height = 5, width = 12)
+ggsave(plot = p11_mcfc_half, filename = p11_file, device = "png", dpi = 300, height = 5, width = 12)
 
 
- 
+# Statistical testinng 
