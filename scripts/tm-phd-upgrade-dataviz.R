@@ -15,11 +15,7 @@ if (!require(pacman)){
 }
 library(pacman)
 p_load("readxl", "tidyverse", "ggsci", "ggdist")
-if (!require(remotes)){
-  install.packages("remotes")
-}
-remotes::install_github('jorvlan/raincloudplots')
-
+p_load_current_gh("erocoar/gghalves")
 # Data exported as multi-sheet .xlsx file. Read in each sheet and store as
 # seperate objects.
 xlsxpath <- "data/numerical_data_for_upgrade_report.xlsx"
@@ -278,17 +274,18 @@ write_csv(df_mfi, file = mfi_csv)
 ###
 
 # specify some aesthetic options that can be added to any ggplot.
-toms_theme <- list(
+toms_theme_no_legend <- list(
   theme_linedraw(),
-  theme(
-    legend.position = "none",
-    axis.title = element_text(size = 24),
-    axis.text = element_text(size =18),
-    panel.background = element_rect(fill = "white", colour = NA),
-    #panel.grid.major = element_blank(),
-    #panel.grid.minor = element_blank()
-  )
-)
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size =12),
+        legend.position = "none"))
+
+# same except with a legend
+toms_theme_legend <- list(
+  theme_linedraw(),
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size =12)))
+
 ## df1 analysis
 # summarise the df1 data to plot
 df1_sum <- df1_bd %>% 
@@ -319,23 +316,23 @@ p1_bdbar <- ggplot(df1_sum, aes(x = sample_type,
     x = "Debris removal status",
     y = "% Cells"
   ) +
-  theme_linedraw() +
-  scale_fill_ucscgb()
+  scale_fill_aaas() +
+  toms_theme_no_legend
 
 # add the data points as dots, requires refactoring sample_type in df1_bd
 as.factor(df1_bd$sample_type)
 df1_bd$sample_type <- fct_recode(df1_bd$sample_type,
                                            Pre = "pre-debris",
                                            Post = "post-debris")
-p1_bdbar + geom_jitter(
+p1_bdbar <- p1_bdbar + geom_jitter(
   data = df1_bd,
   aes(x = sample_type,
       y = cells_pct_total),
   width = 0.1,
   size = 2
-)
+) +
+  toms_theme_no_legend
 
-p1_bdbar <- p1_bdbar + toms_theme
 p1_bdbar  
 
 p1_file <- paste0("output/", sheet_names[1], "_1", ".png")
@@ -390,7 +387,7 @@ p2_viability <- ggplot(df2_viab, aes(x = factor(1), y = cells_pct_viable_cells, 
     geom = "bar",
     width = 0.3
   ) +
-  scale_fill_ucscgb()+
+  scale_fill_aaas()+
   
   stat_summary(
     fun.data = function(x) {
@@ -405,7 +402,7 @@ p2_viability <- ggplot(df2_viab, aes(x = factor(1), y = cells_pct_viable_cells, 
   
   labs(x = "Samples", y = "Viable cell %") +
   theme_linedraw() +
-  toms_theme +
+  toms_theme_no_legend +
   scale_x_discrete(breaks = NULL, labels = NULL)
 
 # plot similar plot for viable cells percentage of total
@@ -430,7 +427,7 @@ p3_viability_total <- ggplot(df2_viab, aes(x = factor(1), y = cells_pct_viable_s
   
   labs(x = "Samples", y = "Viable cell % of total events") +
   theme_linedraw() +
-  toms_theme +
+  toms_theme_no_legend +
   scale_x_discrete(breaks = NULL, labels = NULL) +
   scale_y_continuous(limits = c(0, 60))
 
@@ -476,8 +473,8 @@ p4_cd11b <- ggplot(df3_cd11b,
   labs(x = "Fraction",
        y = "Viable cells %") +
   theme_linedraw() +
-  scale_fill_ucscgb() +
-  toms_theme +
+  scale_fill_aaas() +
+  toms_theme_no_legend +
   theme(legend.position = "none")
   
 # make same graph for total of  sample viability
@@ -504,7 +501,7 @@ p5_cd11b <- ggplot(df3_cd11b,
        y = "Viable cells % of total events") +
   theme_linedraw() +
   scale_fill_manual(values = pal_ucscgb("default")(6)[4:6]) +
-  toms_theme +
+  toms_theme_no_legend +
   theme(legend.position = "none")
 
 # save both plots
@@ -552,9 +549,9 @@ p6_acsa2 <- ggplot(df4_acsa2,
   labs(x = "Fraction",
        y = "Viable cells %") +
   theme_linedraw() +
-  scale_fill_ucscgb() +
+  scale_fill_aaas() +
   #scale_fill_manual(values = pal_ucscgb("default")(6)[4:6]) +
-  toms_theme +
+  toms_theme_no_legend +
   theme(legend.position = "none")
 
 p7_acsa2 <- ggplot(df4_acsa2,
@@ -579,9 +576,9 @@ p7_acsa2 <- ggplot(df4_acsa2,
   labs(x = "Fraction",
        y = "Viable cells % of total events") +
   theme_linedraw() +
-  #scale_fill_ucscgb() +
+  #scale_fill_aaas() +
   scale_fill_manual(values = pal_ucscgb("default")(6)[4:6]) +
-  toms_theme +
+  toms_theme_no_legend +
   theme(legend.position = "none")
 
 # save the two acsa graphs
@@ -598,16 +595,8 @@ df5_summary_filename <- paste0("output/", sheet_names[5], "_summary.csv")
 write_csv(df5_mcfc_summary, file = df5_summary_filename)
 
 # plotting df5
-toms_theme2 <- list(
-  theme_linedraw(),
-  theme(
-    #legend.position = "none",
-    axis.title = element_text(size = 24),
-    axis.text = element_text(size =18),
-    panel.background = element_rect(fill = "white", colour = NA)
-  )
-)
-
+# add a column called sample_group that states where the sample came from
+# reorder this as a factor for ordering the graph's x-axis
 df5_mcfc <- df5_mcfc %>% 
   mutate(
     sample_group = factor(sample_group,
@@ -617,7 +606,8 @@ df5_mcfc <- df5_mcfc %>%
                  "FACS")
     )
   )
-        
+# create a longer format dataframe where rows are repeated once for each cell
+# type/ sample-type combo
 df5_long <- df5_mcfc %>% 
   pivot_longer(
     cols = c(
@@ -642,7 +632,7 @@ df5_long <- df5_mcfc %>%
                        )
                        )
   )
-
+# create a grouped bar plot of the data
 p8 <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
   
   stat_summary(
@@ -661,19 +651,54 @@ p8 <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
   ) +
   
   geom_jitter(
-    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 1),
+    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.9),
     size = 1.5
   ) +
   
-  labs(x = "Sample type",
-       y = "% of total events",
-       color = "cell type") +
-  scale_fill_ucscgb() + 
+  labs(
+    x = "Sample type",
+    y = "% of total events",
+    color = "cell type"
+    ) +
+  
+  scale_fill_aaas() + 
   scale_y_continuous(breaks = seq(0, 80, by = 10)) +
-  toms_theme2
+  toms_theme_legend
+
+# Half box plots
+p9_mcfc_rncl <- ggplot(df5_long, aes(x = sample_group, y = pct, fill = cell_type)) +
+ 
+   # overlay boxplot
+  geom_half_boxplot(
+    nudge = 0.01,
+    side = "l",
+    width = 0.8,
+    outlier.shape = NA,
+    position = position_dodge(width = 0.8)
+  )+
+  
+  geom_half_point(
+    width = 0.2,
+    shape = 21,
+    size = 2,
+    inherit.aes = TRUE,
+    side = "r",
+    alpha = 0.8,
+    position = position_dodge(width = 0.8)
+    ) +
+  
+  labs(
+    x = "Sample Type",
+    y = "Percentage of total events (%)",
+    fill = "Cell type"
+  ) +
+  scale_fill_aaas() +
+  toms_theme_legend
+    
+  
 
 # do the same for the absolute cell count
-
+# i.e. create longer data frame, then code the cell counts as ordered factors
 df5_long_counts <- df5_mcfc %>% 
   pivot_longer(
     cols = c(
