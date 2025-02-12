@@ -500,7 +500,7 @@ p5_cd11b <- ggplot(df3_cd11b,
   labs(x = "Fraction",
        y = "Viable cells % of total events") +
   theme_linedraw() +
-  scale_fill_manual(values = pal_ucscgb("default")(6)[4:6]) +
+  scale_fill_aaas() +
   toms_theme_no_legend +
   theme(legend.position = "none")
 
@@ -577,7 +577,7 @@ p7_acsa2 <- ggplot(df4_acsa2,
        y = "Viable cells % of total events") +
   theme_linedraw() +
   #scale_fill_aaas() +
-  scale_fill_manual(values = pal_ucscgb("default")(6)[4:6]) +
+  scale_fill_aaas() +
   toms_theme_no_legend +
   theme(legend.position = "none")
 
@@ -1184,3 +1184,5 @@ dapi_pct_grid_filename <- paste0("output/", sheet_names[7], "_1.png")
 mfi_grid_filename <- paste0("output/", sheet_names[7], "_2.png")
 ggsave(filename = dapi_pct_grid_filename, plot = fans_dapi_pct, dpi = 300,height = 10, width = 10 )
 ggsave(filename = mfi_grid_filename, plot = fans_dapi_mfi, dpi = 300, height = 10, width = 10)
+
+
